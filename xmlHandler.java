@@ -1,15 +1,28 @@
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
 import java.io.*;
+//import java.util.EmptyStackException;
 import java.util.Vector;
 
-
-public class xmlHandler 
-{
+public class xmlHandler
+{	
+	private File inputFile;
+	private Document doc;
 	
+	public xmlHandler()
+	{
+		inputFile = new File("subjects.xml");
+		if (!inputFile.exists())
+		{
+			inputFile = Gui.chooseInput();
+		}
+	}
 	
-	
-	Vector<Vector> getXML(File inputFile)
+	public Vector<Vector> getXML()
 	{
 		Vector<Vector> rowData = new Vector<Vector>();
 		
@@ -18,13 +31,16 @@ public class xmlHandler
 		{	
 	         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 	         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-	         Document doc = dBuilder.parse(inputFile);
+	         doc = dBuilder.parse(inputFile);
 	         doc.getDocumentElement().normalize();
 	         NodeList nList = doc.getElementsByTagName("list");
+	         if(nList.getLength()==0)
+	         {
+	        	 throw new myExceptions();
+	         }
 	         for (int temp = 0; temp < nList.getLength(); temp++) 
 	         {
-	     		Node nNode = nList.item(temp);		
-	     		//System.out.println("\nCurrent Element :" + nNode.getNodeName());		
+	     		Node nNode = nList.item(temp);				
 	     		if (nNode.getNodeType() == Node.ELEMENT_NODE) 
 	     		{
 	     			Element eElement = (Element) nNode;
@@ -39,14 +55,13 @@ public class xmlHandler
 	    } 
 		catch (Exception e) 
 		{
-	         e.printStackTrace();
+			Gui.infoBox("Błąd\n" + e.toString(), "Błąd");
 	    }
 		return rowData;
 	}
 	
-	Vector<Vector> queryXML(File inputFile, String search)
+	public Vector<Vector> queryXML(String search)
 	{
-		//Vector<Vector> rowData = new Vector<Vector>();
 		Vector<Vector> rowData = new Vector<Vector>();
 		//Vector<String> vectorSearch = new Vector<String>();
 		//String dane ="";
@@ -54,13 +69,16 @@ public class xmlHandler
 		{	
 	         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 	         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-	         Document doc = dBuilder.parse(inputFile);
-	         doc.getDocumentElement().normalize();
+	         //Document doc = dBuilder.parse(inputFile);
+	         //doc.getDocumentElement().normalize();
 	         NodeList nList = doc.getElementsByTagName("list");
+	         if(nList.getLength()==0)
+	         {
+	        	 throw new myExceptions();
+	         }
 	         for (int temp = 0; temp < nList.getLength(); temp++) 
 	         {
-	     		Node nNode = nList.item(temp);		
-	     		//System.out.println("\nCurrent Element :" + nNode.getNodeName());		
+	     		Node nNode = nList.item(temp);				
 	     		if (nNode.getNodeType() == Node.ELEMENT_NODE) 
 	     		{
 	     			Element eElement = (Element) nNode;
@@ -77,24 +95,61 @@ public class xmlHandler
 	    } 
 		catch (Exception e) 
 		{
-	         e.printStackTrace();
+			Gui.infoBox("Błąd\n" + e.toString(), "Błąd");
 	    }
 		return rowData;
 	}
 	
-	void addRecord()
+	public void addRecord()
 	{
 		//narazie nie robim, dorobic wybor i czytanie z pliku
 	}
 	
-	void modifyXML(){}
+	public void deleteRecord(String value)
+	{
+		try
+		{
+			NodeList nodes = doc.getElementsByTagName("list");
+		    for (int i = 0; i < nodes.getLength(); i++) 
+		    {
+		      Element el = (Element)nodes.item(i);
+		      Element name = (Element)el.getElementsByTagName("name").item(0);
+		      String subject = name.getTextContent();
+		      if (subject.equals(value)) 
+		      {
+		         el.getParentNode().removeChild(el);
+		      }
+		      TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		      Transformer transformer = transformerFactory.newTransformer();
+		      DOMSource source = new DOMSource(doc);
+		      StreamResult result = new StreamResult(inputFile);
+		      transformer.transform(source, result);
+		    }
+		}
+		catch (Exception e)
+		{
+			Gui.infoBox("Błąd\n" + e.toString(), "Błąd");
+		}
+	}
 
-
-public static void main(String[] arghs)
-{
-	//xmlHandler handler = new xmlHandler();
-	//File przyklad = new File("./src/subjects.xml");
-	//System.out.println(handler.getXML(przyklad));
+	public void setInput(File file)
+	{
+		inputFile = file;
+	}
 	
-}
+	public File getInput()
+	{
+		return inputFile;
+	}
+	
+	public void setDocument(Document d)
+	{
+		doc = d;
+	}
+	
+	public Document getDocument()
+	{
+		return doc;
+	}
+
 }
