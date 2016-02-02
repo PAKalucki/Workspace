@@ -67,8 +67,8 @@ public class xmlHandler
 		//String dane ="";
 		try 
 		{	
-	         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-	         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+	         //DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+	         //DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 	         //Document doc = dBuilder.parse(inputFile);
 	         //doc.getDocumentElement().normalize();
 	         NodeList nList = doc.getElementsByTagName("list");
@@ -100,9 +100,28 @@ public class xmlHandler
 		return rowData;
 	}
 	
-	public void addRecord()
+	public void addRecord(String value)
 	{
-		//narazie nie robim, dorobic wybor i czytanie z pliku
+	
+		try
+		{
+			Element eList = doc.createElement("list");
+			Element eSubject = doc.createElement("subject");
+			eSubject.setTextContent(value);
+		    eList.appendChild(eSubject);
+		    doc.getFirstChild().appendChild(eList);
+		    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		    Transformer transformer = transformerFactory.newTransformer();
+		    DOMSource source = new DOMSource(doc);
+		    StreamResult result = new StreamResult(inputFile);
+		    transformer.transform(source, result);
+		    //doc.
+			//doc.appendChild(newChild);
+		}
+		catch(Exception e)
+		{
+			Gui.infoBox("Błąd\n" + e.toString(), "Błąd");
+		}
 	}
 	
 	public void deleteRecord(String value)
@@ -110,20 +129,25 @@ public class xmlHandler
 		try
 		{
 			NodeList nodes = doc.getElementsByTagName("list");
+	         if(nodes.getLength()==0)
+	         {
+	        	 throw new myExceptions();
+	         }
 		    for (int i = 0; i < nodes.getLength(); i++) 
 		    {
 		      Element el = (Element)nodes.item(i);
-		      Element name = (Element)el.getElementsByTagName("name").item(0);
+		      Element name = (Element)el.getElementsByTagName("subject").item(0);
 		      String subject = name.getTextContent();
-		      if (subject.equals(value)) 
+		      if (subject.equals(value))
 		      {
 		         el.getParentNode().removeChild(el);
+		         TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			     Transformer transformer = transformerFactory.newTransformer();
+			     DOMSource source = new DOMSource(doc);
+			     StreamResult result = new StreamResult(inputFile);
+			     transformer.transform(source, result);
+			     break;
 		      }
-		      TransformerFactory transformerFactory = TransformerFactory.newInstance();
-		      Transformer transformer = transformerFactory.newTransformer();
-		      DOMSource source = new DOMSource(doc);
-		      StreamResult result = new StreamResult(inputFile);
-		      transformer.transform(source, result);
 		    }
 		}
 		catch (Exception e)

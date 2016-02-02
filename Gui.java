@@ -15,6 +15,7 @@ public class Gui {
 	private JTextField textField;
 	//private JTable table;
 	private JTable table_1;
+	private String value = "";
 
 	/**
 	 * Launch the application.
@@ -45,6 +46,12 @@ public class Gui {
 		JOptionPane.showMessageDialog(null, infoMessage, "Uwaga: " + titleBar, JOptionPane.INFORMATION_MESSAGE);
 	}
 	
+	public static String valueBox(String infoMessage, String titleBar)
+	{
+		String nazwa = JOptionPane.showInputDialog(infoMessage, titleBar);
+		return nazwa;
+	}
+	
 	public static File chooseInput()
 	{
 		JFileChooser openFile = new JFileChooser();
@@ -53,6 +60,17 @@ public class Gui {
         openFile.showOpenDialog(null);
         
         return openFile.getSelectedFile();
+	}
+	
+	public void setValue(String s)
+	{
+		value = s;
+		value = value.replaceAll("\n", "").replace("\r", "");;
+	}
+	
+	public String getValue()
+	{
+		return value;
 	}
 
 	/**
@@ -66,7 +84,7 @@ public class Gui {
 		frame.setBounds(100, 100, 450, 300);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		xmlHandler handler = new xmlHandler();
-		final String value = "";
+		//final String value = "";
 		//File przyklad = new File("subjects.xml");
 		//handler.setInput(przyklad);
 		Vector<String> columnNames = new Vector<String>();//kontener na nazwe kolumny do modelu
@@ -83,6 +101,14 @@ public class Gui {
 		
 		//DefaultTableModel model = new DefaultTableModel();
 		table_1 = new JTable(handler.getXML(),columnNames);
+		table_1.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				int column = table_1.getSelectedColumn();
+				int row = table_1.getSelectedRow();
+				setValue(table_1.getValueAt(row, column).toString());	
+			}
+		});
 		table_1.setRowSelectionAllowed(false);
 		DefaultTableModel model = (DefaultTableModel)table_1.getModel();
 		scrollPane.setViewportView(table_1);
@@ -134,14 +160,18 @@ public class Gui {
 			{
 				 if (arg0.getSource() == btnOpen) 
 				 {
-				 	handler.setInput(chooseInput());
-					for(int i = model.getRowCount()-1; i>=0; i--)
+					File file = chooseInput();
+					if(file!=null)
 					{
-						model.removeRow(i);
-					}
-					for(int temp = 0; temp < handler.getXML().size(); temp++ )
-					{
-						model.addRow(handler.getXML().elementAt(temp));
+					 	handler.setInput(file);
+						for(int i = model.getRowCount()-1; i>=0; i--)
+						{
+							model.removeRow(i);
+						}
+						for(int temp = 0; temp < handler.getXML().size(); temp++ )
+						{
+							model.addRow(handler.getXML().elementAt(temp));
+						}
 					}
 				 }
 			}
@@ -154,13 +184,49 @@ public class Gui {
 		btnUsun.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				//String value="";
-				handler.deleteRecord(value);
+				if(getValue().isEmpty() == false)
+				{
+					handler.deleteRecord(getValue());
+					for(int i = model.getRowCount()-1; i>=0; i--)
+					{
+						model.removeRow(i);
+					}
+					for(int temp = 0; temp < handler.getXML().size(); temp++ )
+					{
+						model.addRow(handler.getXML().elementAt(temp));
+					}
+				}
+				else
+				{
+					infoBox("Wybierz temat do usunięcia","Błąd");
+				}
 			}
 		});
 		btnUsun.setFont(new Font("Tahoma", Font.BOLD, 11));
 		menuBar.add(btnUsun);
 		
 		JButton btnDodaj = new JButton("Dodaj");
+		btnDodaj.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				//String subject = "";
+				String subject = valueBox("Proszę podać nazwę tematu do dodania", "");
+				if(subject!=null)
+				{
+					if(subject.isEmpty() == false)
+					{
+						handler.addRecord(subject);
+						for(int i = model.getRowCount()-1; i>=0; i--)
+						{
+							model.removeRow(i);
+						}
+						for(int temp = 0; temp < handler.getXML().size(); temp++ )
+						{
+							model.addRow(handler.getXML().elementAt(temp));
+						}
+					}
+				}
+			}
+		});
 		btnDodaj.setFont(new Font("Tahoma", Font.BOLD, 11));
 		menuBar.add(btnDodaj);
 		menuBar.add(btnSzukaj);
@@ -170,7 +236,7 @@ public class Gui {
 	}
 	catch (Exception e) 
 	{
-        Gui.infoBox("Błąd:\n" + e.toString(), "Błąd");
+        infoBox("Błąd:\n" + e.toString(), "Błąd");
     }
 	}
 
